@@ -1,0 +1,118 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "header.h"
+
+/* Citire date senzori */
+RAPORT* citire_date_senzor(int n) {
+    RAPORT* senzor = (RAPORT*)malloc(n * sizeof(RAPORT));
+    if (senzor == NULL) {
+        printf("Eroare alocare memorie!\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < n; i++) {
+        printf("Introdu id-ul senzorului si numarul de masuratori:\n");
+        scanf("%d %d", &senzor[i].id_senzor, &senzor[i].numar_masuratori_senzor);
+
+        int nr = senzor[i].numar_masuratori_senzor;
+        senzor[i].temp_senzor = (double*)malloc(nr * sizeof(double));
+        senzor[i].umiditate_senzor = (double*)malloc(nr * sizeof(double));
+        senzor[i].presiune_atmosferica = (double*)malloc(nr * sizeof(double));
+
+        if (!senzor[i].temp_senzor || !senzor[i].umiditate_senzor || !senzor[i].presiune_atmosferica) {
+            printf("Eroare alocare memorie pentru masuratori!\n");
+            exit(1);
+        }
+
+        printf("Introdu masuratorile de temperatura:\n");
+        for (int j = 0; j < nr; j++)
+            scanf("%lf", &senzor[i].temp_senzor[j]);
+
+        printf("Introdu masuratorile de umiditate:\n");
+        for (int j = 0; j < nr; j++)
+            scanf("%lf", &senzor[i].umiditate_senzor[j]);
+
+        printf("Introdu masuratorile de presiune atmosferica:\n");
+        for (int j = 0; j < nr; j++)
+            scanf("%lf", &senzor[i].presiune_atmosferica[j]);
+    }
+
+    return senzor;
+}
+
+/* Afisare date */
+void afisare_date(RAPORT *senzor, int n) {
+    for (int i = 0; i < n; i++) {
+        printf("\nSenzor ID: %d\n", senzor[i].id_senzor);
+
+        printf("Temperatura: ");
+        for (int j = 0; j < senzor[i].numar_masuratori_senzor; j++)
+            printf("%.2lf ", senzor[i].temp_senzor[j]);
+        printf("\n");
+
+        printf("Umiditate: ");
+        for (int j = 0; j < senzor[i].numar_masuratori_senzor; j++)
+            printf("%.2lf ", senzor[i].umiditate_senzor[j]);
+        printf("\n");
+
+        printf("Presiune: ");
+        for (int j = 0; j < senzor[i].numar_masuratori_senzor; j++)
+            printf("%.2lf ", senzor[i].presiune_atmosferica[j]);
+        printf("\n");
+    }
+}
+
+/* Calcul indice de confort */
+double* calculare_indici_de_confort(RAPORT *s, int n) {
+    double* indice = (double*)malloc(n * sizeof(double));
+   
+
+    for (int i = 0; i < n; i++) {
+        double temp = 0, umid = 0, pres = 0;
+        int m = s[i].numar_masuratori_senzor;
+
+        for (int j = 0; j < m; j++) temp += s[i].temp_senzor[j];
+        temp /= m;
+
+        for (int j = 0; j < m; j++) umid += s[i].umiditate_senzor[j];
+        umid /= m;
+
+        for (int j = 0; j < m; j++) pres += s[i].presiune_atmosferica[j];
+        pres /= m;
+
+        indice[i] = (temp*0.6)+ (umid*0.3) + (pres*0.01);
+    }
+
+    return indice;
+}
+
+/* Afisare indici de confort */
+void afisare_confort(double *indice, int n) {
+    printf("\nIndici de confort:\n");
+    for (int i = 0; i < n; i++)
+        printf("Senzor %d: %.2lf\n", i + 1, indice[i]);
+}
+
+/* Calculare extreme */
+void calculare_extreme(const double *conf, int n, double maxim, double minim, const RAPORT *s) {
+    printf("\nSenzori cu indice de confort in afara intervalului [%.2lf, %.2lf]:\n", minim, maxim);
+    for (int i = 0; i < n; i++) {
+        if (conf[i] < minim || conf[i] > maxim) {
+            printf("Senzor ID %d: indice %.2lf\n - NORMAL", s[i].id_senzor, conf[i]);
+        }
+        else
+        {
+            printf("Senzor ID %d: indice %.2lf\n - EXTREM", s[i].id_senzor, conf[i]);
+        }
+    }
+}
+
+/* Dealocare memorie */
+void dealocare_memorie(RAPORT *s, int n) {
+    for (int i = 0; i < n; i++) {
+        free(s[i].temp_senzor);
+        free(s[i].umiditate_senzor);
+        free(s[i].presiune_atmosferica);
+    }
+    free(s);
+}
